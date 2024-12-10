@@ -1,0 +1,9 @@
+apiVersion: kudeploy.com/v1
+kind: Project
+metadata:
+  labels:
+    app.kubernetes.io/name: kudeploy
+    app.kubernetes.io/managed-by: kustomize
+  name: project-sample
+spec:
+  # TODO(user): Add fields here
