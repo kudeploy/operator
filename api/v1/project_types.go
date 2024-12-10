@@ -25,21 +25,23 @@ import (
 
 // ProjectSpec defines the desired state of Project.
 type ProjectSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of Project. Edit project_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
 }
 
 // ProjectStatus defines the observed state of Project.
 type ProjectStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Phase represents the current phase of project provisioning
+	// +kubebuilder:validation:Enum=Pending;Active;Terminating
+	// +kubebuilder:default=Pending
+	Phase string `json:"phase,omitempty"`
+
+	// Conditions represents the latest available observations of a project's state
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // Project is the Schema for the projects API.
 type Project struct {
