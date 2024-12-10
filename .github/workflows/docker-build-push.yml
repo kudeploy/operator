@@ -1,7 +1,8 @@
 name: Docker Build and Push
 
 on:
-  push:
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -19,7 +20,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GH_TOKEN }}
 
       - uses: docker/setup-buildx-action@v3
 
