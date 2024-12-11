@@ -96,6 +96,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 							Image:           service.Spec.Image,
 							ImagePullPolicy: corev1.PullPolicy(service.Spec.ImagePullPolicy),
 							Ports:           convertToContainerPorts(service.Spec.Ports),
+							Env:             convertToContainerEnv(service.Spec.Env),
 						},
 					},
 				},
@@ -147,6 +148,17 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	log.Info("Kubernetes Service reconciled", "operation", svcOp)
 	return ctrl.Result{}, nil
+}
+
+func convertToContainerEnv(envs []kudeploycomv1.EnvVar) []corev1.EnvVar {
+	var containerEnvs []corev1.EnvVar
+	for _, env := range envs {
+		containerEnvs = append(containerEnvs, corev1.EnvVar{
+			Name:  env.Name,
+			Value: env.Value,
+		})
+	}
+	return containerEnvs
 }
 
 // 转换 ServicePort 到 corev1.ContainerPort
