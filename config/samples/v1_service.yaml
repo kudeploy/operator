@@ -1,0 +1,15 @@
+apiVersion: kudeploy.com/v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: kudeploy
+    app.kubernetes.io/managed-by: kustomize
+  name: service-sample
+  namespace: project-sample
+spec:
+  image: traefik/whoami
+  ports:
+    - containerPort: 80
+      hostPort: 80
+    - containerPort: 443
+      hostPort: 443

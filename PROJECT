@@ -16,4 +16,12 @@ resources:
   kind: Project
   path: github.com/kudeploy/operator/api/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kudeploy.com
+  kind: Service
+  path: github.com/kudeploy/operator/api/v1
+  version: v1
 version: "3"
