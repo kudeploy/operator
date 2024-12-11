@@ -57,7 +57,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	// 获取 Project 资源
 	project := &kudeploycomv1.Project{}
-	if err := r.Get(ctx, req.NamespacedName, project); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: req.Name}, project); err != nil {
 		if apierrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
@@ -79,47 +79,40 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.reconcileDelete(ctx, project)
 	}
 
-	// 检查 namespace 是否存在
-	namespace := &corev1.Namespace{}
-	err := r.Get(ctx, client.ObjectKey{Name: project.Name}, namespace)
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			logger.Error(err, "检查 namespace 失败")
-			return ctrl.Result{}, err
-		}
-		// namespace 不存在，创建新的
-		namespace = &corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: project.Name,
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(project, kudeploycomv1.GroupVersion.WithKind("Project")),
-				},
-				Labels: map[string]string{
-					"kudeploy.com/project": project.Name,
-				},
-			},
-		}
-		if err := r.Create(ctx, namespace); err != nil {
-			logger.Error(err, "创建 namespace 失败")
-			return ctrl.Result{}, err
-		}
-	} else {
-		// namespace 存在，检查所有权
-		if !metav1.IsControlledBy(namespace, project) {
-			msg := fmt.Sprintf("Namespace %s 已存在且不属于此 project", project.Name)
-			meta.SetStatusCondition(&project.Status.Conditions, metav1.Condition{
-				Type:    "NamespaceCreated",
-				Status:  metav1.ConditionFalse,
-				Reason:  "NamespaceOwnedByOthers",
-				Message: msg,
-			})
-			project.Status.Phase = "Failed"
-			if err := r.Status().Update(ctx, project); err != nil {
-				logger.Error(err, "更新状态失败")
-			}
-			return ctrl.Result{}, fmt.Errorf("%s", msg)
-		}
+	// 使用 CreateOrUpdate 管理 namespace
+	namespace := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: project.Name,
+		},
 	}
+
+	op, err := ctrl.CreateOrUpdate(ctx, r.Client, namespace, func() error {
+		// 设置或更新标签
+		if namespace.Labels == nil {
+			namespace.Labels = make(map[string]string)
+		}
+		namespace.Labels["kudeploy.com/project"] = project.Name
+
+		// 设置所有权引用
+		return ctrl.SetControllerReference(project, namespace, r.Scheme)
+	})
+
+	if err != nil {
+		logger.Error(err, "管理 namespace 失败")
+		meta.SetStatusCondition(&project.Status.Conditions, metav1.Condition{
+			Type:    "NamespaceCreated",
+			Status:  metav1.ConditionFalse,
+			Reason:  "NamespaceManagementFailed",
+			Message: fmt.Sprintf("无法管理 namespace: %v", err),
+		})
+		project.Status.Phase = "Failed"
+		if updateErr := r.Status().Update(ctx, project); updateErr != nil {
+			logger.Error(updateErr, "更新状态失败")
+		}
+		return ctrl.Result{}, err
+	}
+
+	logger.Info("Namespace 操作完成", "operation", op)
 
 	// 更新状态为 Active
 	meta.SetStatusCondition(&project.Status.Conditions, metav1.Condition{

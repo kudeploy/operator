@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	kudeploycomv1 "github.com/kudeploy/operator/api/v1"
@@ -77,7 +76,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	// 创建或更新 Deployment
-	op, err := controllerutil.CreateOrUpdate(ctx, r.Client, deployment, func() error {
+	op, err := ctrl.CreateOrUpdate(ctx, r.Client, deployment, func() error {
 		// 设置 deployment spec
 		replicas := int32(1)
 
@@ -104,7 +103,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 
 		// 设置所有者引用
-		return controllerutil.SetControllerReference(&service, deployment, r.Scheme)
+		return ctrl.SetControllerReference(&service, deployment, r.Scheme)
 	})
 
 	if err != nil {
@@ -124,7 +123,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	// 创建或更新 Kubernetes Service
-	svcOp, err := controllerutil.CreateOrUpdate(ctx, r.Client, k8sService, func() error {
+	svcOp, err := ctrl.CreateOrUpdate(ctx, r.Client, k8sService, func() error {
 		// 设置标签
 		k8sService.Labels = map[string]string{
 			"kudeploy.com/service": service.Name,
@@ -138,7 +137,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 
 		// 设置所有者引用
-		return controllerutil.SetControllerReference(&service, k8sService, r.Scheme)
+		return ctrl.SetControllerReference(&service, k8sService, r.Scheme)
 	})
 
 	if err != nil {
