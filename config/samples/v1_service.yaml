@@ -13,3 +13,7 @@ spec:
       hostPort: 80
     - containerPort: 443
       hostPort: 443
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 512Mi

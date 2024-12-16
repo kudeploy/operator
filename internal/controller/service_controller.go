@@ -97,6 +97,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 							ImagePullPolicy: corev1.PullPolicy(service.Spec.ImagePullPolicy),
 							Ports:           convertToContainerPorts(service.Spec.Ports),
 							Env:             convertToContainerEnv(service.Spec.Env),
+							Resources:       *service.Spec.Resources,
 						},
 					},
 				},
