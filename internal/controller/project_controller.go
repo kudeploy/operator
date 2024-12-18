@@ -91,6 +91,8 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if namespace.Labels == nil {
 			namespace.Labels = make(map[string]string)
 		}
+
+		namespace.Labels["app.kubernetes.io/managed-by"] = "kudeploy"
 		namespace.Labels["kudeploy.com/project"] = project.Name
 
 		// 设置所有权引用

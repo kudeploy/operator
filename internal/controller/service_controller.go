@@ -63,7 +63,10 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	labels := map[string]string{
-		"kudeploy.com/service": service.Name,
+		"app.kubernetes.io/name":       service.Name,
+		"app.kubernetes.io/managed-by": "kudeploy",
+		"kudeploy.com/project":         service.Namespace,
+		"kudeploy.com/service":         service.Name,
 	}
 
 	// 构造期望的 Deployment
@@ -128,7 +131,10 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	svcOp, err := ctrl.CreateOrUpdate(ctx, r.Client, k8sService, func() error {
 		// 设置标签
 		k8sService.Labels = map[string]string{
-			"kudeploy.com/service": service.Name,
+			"app.kubernetes.io/name":       service.Name,
+			"app.kubernetes.io/managed-by": "kudeploy",
+			"kudeploy.com/project":         service.Namespace,
+			"kudeploy.com/service":         service.Name,
 		}
 
 		// 设置 Service spec
