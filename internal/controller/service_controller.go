@@ -69,6 +69,10 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		"kudeploy.com/service":         service.Name,
 	}
 
+	selectorLabels := map[string]string{
+		"app.kubernetes.io/name": service.Name,
+	}
+
 	// 构造期望的 Deployment
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -86,7 +90,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		deployment.Spec = appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: labels,
+				MatchLabels: selectorLabels,
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
@@ -139,7 +143,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 		// 设置 Service spec
 		k8sService.Spec = corev1.ServiceSpec{
-			Selector: labels,
+			Selector: selectorLabels,
 			Ports:    convertToServicePorts(service.Spec.Ports),
 			Type:     corev1.ServiceTypeClusterIP,
 		}
